@@ -109,6 +109,7 @@ gamestate="other"
 gamestate2="other"
 
 client = None
+hp=440
    
 async def send():
     try:
@@ -125,6 +126,7 @@ async def send():
             global tempRate
             global RoleVMin
             global RoleVMax
+            global hp
 
             lg=0
             global temp
@@ -187,6 +189,7 @@ async def send():
                 if(gamestate =="game" and gamestate2 == "game"):
                      print("STATE:INGAME","HP:",hp,"Power:",power)
                      await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(power))
+                     gamestate="other"
                 else:
                     gamestate="other"
                     print("STATE:Not In Game","Power: 0")
@@ -260,6 +263,7 @@ async def send():
                 if(gamestate =="game" and gamestate2 == "game"):
                      print("STATE:INGAME","HP:",hp,"Power:",power)
                      await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(power))
+                     gamestate2="other"
                 else:
                     gamestate2="other"
                     print("STATE:Not In Game","Power: 0")
@@ -279,6 +283,7 @@ async def main():
     
     async with DGLabWSServer("0.0.0.0", 5679, 60) as server:
         global client
+        global Enable
         client = server.new_local_client()
         
                 
@@ -305,10 +310,13 @@ async def main():
                     print("Wave Out Disabled")
                     Enable=0
                     
+
             try:
+                 
                 await send()
+            
                 pulse_data_current = next(pulse_data_iterator, None)   
-       
+        
                 if(Enable==1):
                     if not pulse_data_current:
                         pulse_data_iterator = iter(PULSE_DATA.values())
@@ -316,10 +324,11 @@ async def main():
                     await client.add_pulses(Channel.A, *(pulse_data_current))
                 else:
                     await client.clear_pulses(Channel.A)
+            except all as ww:
+                 print(ww)
 
 
-            except:
-                pass    
+
        
         
 
