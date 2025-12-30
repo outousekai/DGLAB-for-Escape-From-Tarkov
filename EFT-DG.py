@@ -18,6 +18,7 @@ def first(config):
     global RoleHmax
     global RoleHmin
     global RoleSmin
+    global RoleSmax
     global RoleVMax
     global RoleVMin
     global tempRate
@@ -29,11 +30,12 @@ def first(config):
     Ratelimit =config.getfloat(section="Basic",option="Ratelimit")
     BagColorMin=eval(config.get(section="Advanced",option="BagColorMin") )
     BagColorMax=eval(config.get(section="Advanced",option="BagColorMax"))
-    RoleHmax=config.getfloat(section="Advanced",option="RoleHmax")
-    RoleHmin=config.getfloat(section="Advanced",option="RoleHmin")
-    RoleSmin=config.getfloat(section="Advanced",option="RoleSmin")
-    RoleVMax=config.getfloat(section="Advanced",option="RoleVMax")
-    RoleVMin=config.getfloat(section="Advanced",option="RoleVMin")
+    RoleHmax=eval(config.get(section="Advanced",option="RoleHsvmax"))[0]
+    RoleHmin=eval(config.get(section="Advanced",option="RoleHsvmin"))[0]
+    RoleSmax=eval(config.get(section="Advanced",option="RoleHsvmax"))[1]
+    RoleSmin=eval(config.get(section="Advanced",option="RoleHsvmin"))[1]
+    RoleVMax=eval(config.get(section="Advanced",option="RoleHsvMax"))[2]
+    RoleVMin=eval(config.get(section="Advanced",option="RoleHsvMin"))[2]
     tempRate=config.getfloat(section="Advanced",option="tempRate")
     HPlow =config.getfloat(section="Basic",option="HPlow")
     HPhigh =config.getfloat(section="Basic",option="HPhigh")
@@ -41,8 +43,8 @@ def first(config):
 config.read('config.ini')
 
 if(config.sections()==[]):
-    config['Basic'] = { 'LocalIP': '192.168.101.66', 'PowerLimit': 60, 'Ratelimit': 0.3 ,'HPlow':100, 'HPhigh':435} 
-    config['Advanced'] = { 'BagColorMin': [39,49,66] , 'BagColorMax': [43,53,70] ,"RoleHmax":130,'RoleHmin':0,'RoleSmin':0.4,'RoleVMax':0.6,'RoleVMin':0.2,'tempRate':0.3 } 
+    config['Basic'] = { 'LocalIP': '111.111.111.111', 'PowerLimit': 60, 'Ratelimit': 0.4 ,'HPlow':100, 'HPhigh':435} 
+    config['Advanced'] = { 'BagColorMin': [39,49,66] , 'BagColorMax': [43,53,70] ,"RoleHsvmax":[130,1,0.6],'RoleHsvmin':[0,0.4,0.1],'tempRate':0.3 } 
     config['Wave'] ={'wave': [
         ((11, 11, 11, 11), (100, 100, 100, 100)), ((11, 11, 11, 11), (20, 20, 20, 20)),((11, 11, 11, 11), (100, 100, 100, 100)),((11, 11, 11, 11), (100, 100, 100, 100)), ((11, 11, 11, 11), (40, 40,40, 40)), ((11, 11, 11, 11), (95, 95,95, 95)), ((11, 11, 11, 11), (100, 100,100, 100)), ((20, 20, 20, 20), (50, 50,50, 50)),
         ((20, 20, 20, 20), (0, 0, 0, 0)), ((20, 20, 20, 20), (50, 50, 50, 50)),((20, 20, 20, 20), (100, 100, 100, 100)), ((20, 20, 20, 20), (100, 100,100, 100)), ((20, 20, 20, 20), (50, 50,50, 50)), ((20, 20, 20, 20), (0, 0,0, 0)), ((20, 20, 20, 20), (50, 50,50, 50)),((20, 20, 20, 20), (100, 100,100, 100)),
@@ -113,28 +115,30 @@ hp=440
    
 async def send():
     try:
-        try:
-            global client
-            global Ratelimit
-            time.sleep(Ratelimit)
-            global PowerLimit
-            global BagColorMin
-            global BagColorMax
-            global RoleHmax
-            global RoleHmin
-            global RoleSmin
-            global tempRate
-            global RoleVMin
-            global RoleVMax
-            global hp
+        global client
+        global Ratelimit
+        time.sleep(Ratelimit)
+        global PowerLimit
+        global BagColorMin
+        global BagColorMax
+        global RoleHmax
+        global RoleHmin
+        global RoleSmin
+        global RoleSmax
+        global tempRate
+        global RoleVMin
+        global RoleVMax
+        global hp
 
-            lg=0
-            global temp
-            global gamestate
-            global gamestate2
-            global power
-            global HPlow
-            global HPhigh
+        lg=0
+        global temp
+        global gamestate
+        global gamestate2
+        global power
+        global HPlow
+        global HPhigh
+        try:
+           
             i =pyautogui.screenshot(region=ScreenSet)
             i_ar=np.array(i)
             points= np.delete(i_ar.reshape([-1,3]),Li,axis=0)
@@ -142,10 +146,16 @@ async def send():
 
             Rgb=np.average(points,axis=0,weights=Cw)
 
-            
+            ps=0
+            hsv=[]
+            for hs in points:
+                hsv.append(rgb2hsv(hs[0],hs[1],hs[2]))
+            hsv=np.array(hsv)
             hss=rgb2hsv(Rgb[0],Rgb[1],Rgb[2])
+            
             x1=(hss[0]/360)*(hss[1]*hss[2])
-            if ((RoleHmin<=np.array(hss)[0]<RoleHmax)and(np.array(hss)[1]>=RoleSmin) and (RoleVMin<np.array(hss)[2]<RoleVMax)): 
+
+            if ((RoleHmin<=np.array(hss)[0]<RoleHmax)and(RoleSmax>np.array(hss)[1]>=RoleSmin) and (RoleVMin<=np.array(hss)[2]<RoleVMax)): 
                 ps=(258597.6*(x1*x1*x1)-75978.385*(x1*x1)+9241.92*x1+0.05899)+7
                 hp=(ps*tempRate+temp*(1-tempRate))
                 temp=hp
@@ -165,11 +175,14 @@ async def send():
                 else:
                         lg=lg
                 if (gamestate =="game" and gamestate2 =="game") or(gamestate2 !="other" and gamestate !="game") or (gamestate2 !="game" and gamestate !="other")or (gamestate2 =="game" and gamestate !="game")or (gamestate2 !="game" and gamestate =="game"): 
-                    print("STATE:INGAME","HP:",hp,"Power:",lg)
                     power = lg
+                    dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
+                    
+                    print(dbg+"|  STATE:INGAME","HP:",hp,"Power:",lg)
                     await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(lg))
                 else:
-                    print("STATE:INGAME","HP:",hp,"Power:",power)
+                    dbg=str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
+                    print(dbg+"|  STATE:INGAME","HP:",hp,"Power:",power)
                     await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(power))
                     
                 
@@ -181,18 +194,21 @@ async def send():
 
             elif(BagColorMin[0]<points[0][0]<BagColorMax[0]) and (BagColorMin[1]<points[0][1]<BagColorMax[1]) and (BagColorMin[2]<points[0][2]<BagColorMax[2]):
                 gamestate="bag"    
-                print("STATE:IN BAG","Power:",power)
+                dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
+                print(dbg+"|  STATE:IN BAG","Power:",power)
                 await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(power))
                 
 
             else:
                 if(gamestate =="game" and gamestate2 == "game"):
-                     print("STATE:INGAME","HP:",hp,"Power:",power)
+                     dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
+                     print(dbg+"|  STATE:INGAME","HP:",hp,"Power:",power)
                      await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(power))
                      gamestate="other"
                 else:
                     gamestate="other"
-                    print("STATE:Not In Game","Power: 0")
+                    dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
+                    print(dbg+"|  STATE:Not In Game","Power: 0")
                     await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(0))
         except all as ww:
              print(ww)
@@ -210,13 +226,16 @@ async def send():
             Cw=[0.0795,0.1931,0.1363,0.1363,0.1591,0.1477,0.1477]
 
             Rgb=np.average(points,axis=0,weights=Cw)
-
-
-            
+            ps=0
+            hsv=[]
+            for hs in points:
+                hsv.append(rgb2hsv(hs[0],hs[1],hs[2]))
+            hsv=np.array(hsv)
             hss=rgb2hsv(Rgb[0],Rgb[1],Rgb[2])
 
+
             x1=(hss[0]/360)*(hss[1]*hss[2])
-            if ((RoleHmin<=np.array(hss)[0]<RoleHmax)and(np.array(hss)[1]>=RoleSmin) and (RoleVMin<np.array(hss)[2]<RoleVMax)): #检测小绿人
+            if ((RoleHmin<=np.array(hss)[0]<RoleHmax)and(RoleSmax>np.array(hss)[1]>=RoleSmin) and (RoleVMin<=np.array(hss)[2]<RoleVMax)): 
                 ps=(258597.6*(x1*x1*x1)-75978.385*(x1*x1)+9241.92*x1+0.05899)+7
             
                 hp=(ps*tempRate+temp*(1-tempRate))
@@ -238,12 +257,15 @@ async def send():
                 else:
                         lg=lg
                 if (gamestate =="game" and gamestate2 =="game") or(gamestate !="other" and gamestate2 !="game")or (gamestate2 !="other" and gamestate !="game")or (gamestate2 =="game" and gamestate !="game")or (gamestate2 !="game" and gamestate =="game"): 
-                        print("STATE:INGAME","HP:",hp,"Power:",lg)
+                        
                         power = lg
+                        dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
+                        print(dbg+"|  STATE:INGAME","HP:",hp,"Power:",lg)
                         await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(lg))
                         
                 else:
-                        print("STATE:INGAME","HP:",hp,"Power:",power)
+                        dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
+                        print(dbg+"|  STATE:INGAME","HP:",hp,"Power:",power)
                         await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(power))
                         
                 
@@ -256,17 +278,20 @@ async def send():
                 
                 
                 await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(power))
-                gamestate2="bag"    
-                print("STATE:IN BAG","Power:",power)
+                gamestate2="bag" 
+                dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)   
+                print(dbg+"|  STATE:IN BAG","Power:",power)
 
             else:
                 if(gamestate =="game" and gamestate2 == "game"):
-                     print("STATE:INGAME","HP:",hp,"Power:",power)
+                     dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
+                     print(dbg+"|  STATE:INGAME","HP:",hp,"Power:",power)
                      await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(power))
                      gamestate2="other"
                 else:
                     gamestate2="other"
-                    print("STATE:Not In Game","Power: 0")
+                    dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
+                    print(dbg+"|  STATE:Not In Game","Power: 0")
                     await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(0))
             
         except all as ww:
@@ -280,52 +305,58 @@ async def send():
    
 Enable = 0
 async def main():
-    
-    async with DGLabWSServer("0.0.0.0", 5679, 60) as server:
-        global client
-        global Enable
-        client = server.new_local_client()
-        
-                
+    if(LocalIP=="111.111.111.111"):
+         while True:
+            time.sleep(1)
+            print("请到config文件里修改本机IP(LOCALIP)及强度上限(POWERLIMIT) #####此处强度上限需低于手机端最低强度上限")
             
-
-        url = client.get_qrcode("ws://"+LocalIP+":5679")
-        print("Scan the QRCODE with DG-Lab App")
-        print_qrcode(url)
-   
+    else:
         
-        await client.bind()
-        pulse_data_iterator = iter(PULSE_DATA.values())
-        
-        print(f"Binded with APP {client.target_id}")
-
-        async for data in client.data_generator():      
-            if isinstance(data, FeedbackButton):    
+        async with DGLabWSServer("0.0.0.0", 5678, 60) as server:
+            global client
+            global Enable
+            client = server.new_local_client()
+            
+                    
                 
 
-                if data == FeedbackButton.A1 or data == FeedbackButton.A2 or data == FeedbackButton.A3 or data == FeedbackButton.A4 or data == FeedbackButton.A5:
-                    print("Wave Out Enabled")
-                    Enable=1
-                if data == FeedbackButton.B1 or data == FeedbackButton.B2 or data == FeedbackButton.B3 or data == FeedbackButton.B4 or data == FeedbackButton.B5:
-                    print("Wave Out Disabled")
-                    Enable=0
+            url = client.get_qrcode("ws://"+LocalIP+":5678")
+            print("Scan the QRCODE with DG-Lab App")
+            print_qrcode(url)
+    
+            
+            await client.bind()
+            pulse_data_iterator = iter(PULSE_DATA.values())
+            
+            print(f"Binded with APP {client.target_id}")
+
+            async for data in client.data_generator():      
+                if isinstance(data, FeedbackButton):    
                     
 
-            try:
-                 
-                await send()
+                    if data == FeedbackButton.A1 or data == FeedbackButton.A2 or data == FeedbackButton.A3 or data == FeedbackButton.A4 or data == FeedbackButton.A5:
+                        print("Wave Out Enabled")
+                        Enable=1
+                    if data == FeedbackButton.B1 or data == FeedbackButton.B2 or data == FeedbackButton.B3 or data == FeedbackButton.B4 or data == FeedbackButton.B5:
+                        print("Wave Out Disabled")
+                        Enable=0
+                        
+
+                try:
+                    
+                    await send()
+                
+                    pulse_data_current = next(pulse_data_iterator, None)   
             
-                pulse_data_current = next(pulse_data_iterator, None)   
-        
-                if(Enable==1):
-                    if not pulse_data_current:
-                        pulse_data_iterator = iter(PULSE_DATA.values())
-                        continue
-                    await client.add_pulses(Channel.A, *(pulse_data_current))
-                else:
-                    await client.clear_pulses(Channel.A)
-            except all as ww:
-                 print(ww)
+                    if(Enable==1):
+                        if not pulse_data_current:
+                            pulse_data_iterator = iter(PULSE_DATA.values())
+                            continue
+                        await client.add_pulses(Channel.A, *(pulse_data_current))
+                    else:
+                        await client.clear_pulses(Channel.A)
+                except :
+                    print("das")
 
 
 
