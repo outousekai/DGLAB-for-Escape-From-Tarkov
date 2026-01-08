@@ -7,6 +7,9 @@ import time
 import socket
 import psutil
 import configparser as ConfigParser
+import random
+import contextlib
+import pulses
 config = ConfigParser.ConfigParser()
 power=0
 Set2K=[int(2560*0.014),int(1440*0.02),int(2560*0.048),int(1440*0.2)]
@@ -27,6 +30,7 @@ def first(config):
     global HPhigh
     global HPlow
     global Wave
+
     LocalIP=config.get(section="Basic",option="LocalIP")
     PowerLimit=config.getfloat(section="Basic",option="PowerLimit")
     Ratelimit =config.getfloat(section="Basic",option="Ratelimit")
@@ -42,37 +46,47 @@ def first(config):
     HPlow =config.getfloat(section="Basic",option="HPlow")
     HPhigh =config.getfloat(section="Basic",option="HPhigh")
     Wave = eval(config.get(section="Wave",option="wave"))
-config.read('config.ini')
 
-if(config.sections()==[]):
-    config['Basic'] = { 'LocalIP': '111.111.111.111', 'PowerLimit': 60, 'Ratelimit': 0.4 ,'HPlow':100, 'HPhigh':435} 
-    config['Advanced'] = { 'BagColorMin': [39,49,66] , 'BagColorMax': [43,53,70] ,"RoleHsvmax":[130,1,0.6],'RoleHsvmin':[0,0.4,0.1],'tempRate':0.3 } 
-    config['Wave'] ={'wave': [
-        ((11, 11, 11, 11), (100, 100, 100, 100)), ((11, 11, 11, 11), (20, 20, 20, 20)),((11, 11, 11, 11), (100, 100, 100, 100)),((11, 11, 11, 11), (100, 100, 100, 100)), ((11, 11, 11, 11), (40, 40,40, 40)), ((11, 11, 11, 11), (95, 95,95, 95)), ((11, 11, 11, 11), (100, 100,100, 100)), ((20, 20, 20, 20), (50, 50,50, 50)),
-        ((20, 20, 20, 20), (0, 0, 0, 0)), ((20, 20, 20, 20), (50, 50, 50, 50)),((20, 20, 20, 20), (100, 100, 100, 100)), ((20, 20, 20, 20), (100, 100,100, 100)), ((20, 20, 20, 20), (50, 50,50, 50)), ((20, 20, 20, 20), (0, 0,0, 0)), ((20, 20, 20, 20), (50, 50,50, 50)),((20, 20, 20, 20), (100, 100,100, 100)),
-        ((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100)),((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100)),
-       ((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100)),((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100))
-       ]}
-    with open('config.ini', 'w') as configfile: 
-        config.write(configfile)
-    print("Created Default Config File")
-    first(config)
-else:
+def config_init():
+    global PULSE_DATA
+    global temp
+    global gamestate
+    global gamestate2
+    global client
+    global hp
+    global LocalIP
     config.read('config.ini')
-    first(config)
-for a in range(0,10):
-    print("Read the README.TXT at first pls")
-print("LocalIP=",LocalIP)
+
+    if(config.sections()==[]):
+        config['Basic'] = { 'LocalIP': '111.111.111.111', 'PowerLimit': 60, 'Ratelimit': 0.4 ,'HPlow':100, 'HPhigh':435} 
+        config['Advanced'] = { 'BagColorMin': [39,49,66] , 'BagColorMax': [43,53,70] ,"RoleHsvmax":[130,1,0.6],'RoleHsvmin':[0,0.4,0.1],'tempRate':0.3 } 
+        config['Wave'] ={'wave': [
+            ((11, 11, 11, 11), (100, 100, 100, 100)), ((11, 11, 11, 11), (20, 20, 20, 20)),((11, 11, 11, 11), (100, 100, 100, 100)),((11, 11, 11, 11), (100, 100, 100, 100)), ((11, 11, 11, 11), (40, 40,40, 40)), ((11, 11, 11, 11), (95, 95,95, 95)), ((11, 11, 11, 11), (100, 100,100, 100)), ((20, 20, 20, 20), (50, 50,50, 50)),
+            ((20, 20, 20, 20), (0, 0, 0, 0)), ((20, 20, 20, 20), (50, 50, 50, 50)),((20, 20, 20, 20), (100, 100, 100, 100)), ((20, 20, 20, 20), (100, 100,100, 100)), ((20, 20, 20, 20), (50, 50,50, 50)), ((20, 20, 20, 20), (0, 0,0, 0)), ((20, 20, 20, 20), (50, 50,50, 50)),((20, 20, 20, 20), (100, 100,100, 100)),
+            ((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100)),((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100)),
+        ((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100)),((25, 25, 25, 25), (100, 100, 100, 100)), ((25, 25, 25, 25), (100, 100, 100, 100))
+        ]}
+        with open('config.ini', 'w') as configfile: 
+            config.write(configfile)
+        print("Created Default Config File")
+        first(config)
+    else:
+        config.read('config.ini')
+        first(config)
+    
+    PULSE_DATA = {'wave':Wave}
+    for _ in range(0,10):
+        print("Read the README.TXT at first pls")
+    print("LocalIP=",LocalIP)
+    temp=440
+    gamestate="other"
+    gamestate2="other"
+
+    client = None
+    hp=440
 
 
 
-n_ar=np.array([0,0,0])
-arrrr=np.array([])
-pointsnum=ScreenSet[2]*ScreenSet[3]
-msk=[2030,11527,11951,16595,17017,23127,24322]
-Dlist=[int((msk[0]/35136)*pointsnum),int((msk[1]/35136)*pointsnum),int((msk[2]/35136)*pointsnum),int((msk[3]/35136)*pointsnum),int((msk[4]/35136)*pointsnum),int((msk[5]/35136)*pointsnum),int((msk[6]/35136)*pointsnum)]
-Li=np.delete(np.array(range(0,35136)),Dlist)
-PULSE_DATA = {'wave':Wave}
 def rgb2hsv(r, g, b):
     r, g, b = r/255.0, g/255.0, b/255.0
     mx = max(r, g, b)
@@ -95,7 +109,7 @@ def rgb2hsv(r, g, b):
         s = m/mx
     v = mx
     return h, s, v
-temp=440
+
 def print_qrcode(_: str):
     url = _
     qr = qrcode.QRCode(
@@ -109,12 +123,15 @@ def print_qrcode(_: str):
     im = qr.make_image(fill_color="black", back_color="white")
     im = im.convert("L")
     im.show()
-gamestate="other"
-gamestate2="other"
 
-client = None
-hp=440
-   
+def get_free_port(start=5678, end=8765):
+    # 随机100次你都找不到没占用的端口?我是不信的
+    for _ in range(100):
+        port = random.randint(start, end)
+        with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+            if s.connect_ex(('0.0.0.0', port)) != 0:
+                return port
+
 async def send():
     try:
         global client
@@ -145,7 +162,7 @@ async def send():
             i_ar=np.array(i)
             points= np.delete(i_ar.reshape([-1,3]),Li,axis=0)
             Cw=[0.0795,0.1931,0.1363,0.1363,0.1591,0.1477,0.1477]
-
+            
             Rgb=np.average(points,axis=0,weights=Cw)
 
             ps=0
@@ -163,54 +180,45 @@ async def send():
                 temp=hp
                 if hp>=HPhigh:
                         lg=0
-                        
                 else:
                     if hp>=0:
-                        lg=PowerLimit*(((440-hp)/(440-HPlow))) #计算强度
-                        
+                        lg=PowerLimit*(((440-hp)/(440-HPlow))) # 计算强度
                     if hp<0:
                         lg=PowerLimit
-                        
                 if lg>=PowerLimit:
                         lg=PowerLimit
-                        
                 else:
                         lg=lg
                 if (gamestate =="game" and gamestate2 =="game") or(gamestate2 !="other" and gamestate !="game") or (gamestate2 !="game" and gamestate !="other")or (gamestate2 =="game" and gamestate !="game")or (gamestate2 !="game" and gamestate =="game"): 
                     power = lg
                     dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
                     
-                    print(dbg+"|  STATE:INGAME","HP:",hp,"Power:",lg)
+                    print(dbg+"|  状态:游戏中","HP:",hp,"Power:",lg)
                     await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(lg))
                 else:
                     dbg=str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
-                    print(dbg+"|  STATE:INGAME","HP:",hp,"Power:",power)
+                    print(dbg+"|  状态:游戏中","HP:",hp,"Power:",power)
                     await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(power))
-                    
-                
-                
                 
                 gamestate="game"
-                
-                
-
+            
             elif(BagColorMin[0]<points[0][0]<BagColorMax[0]) and (BagColorMin[1]<points[0][1]<BagColorMax[1]) and (BagColorMin[2]<points[0][2]<BagColorMax[2]):
                 gamestate="bag"    
                 dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
-                print(dbg+"|  STATE:IN BAG","Power:",power)
+                print(dbg+"|  状态:在背包","Power:",power)
                 await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(power))
                 
 
             else:
                 if(gamestate =="game" and gamestate2 == "game"):
                      dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
-                     print(dbg+"|  STATE:INGAME","HP:",hp,"Power:",power)
+                     print(dbg+"|  状态:游戏中","HP:",hp,"Power:",power)
                      await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(power))
                      gamestate="other"
                 else:
                     gamestate="other"
                     dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
-                    print(dbg+"|  STATE:Not In Game","Power: 0")
+                    print(dbg+"|  状态:未进入游戏","Power: 0")
                     await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(0))
         except all as ww:
              print(ww)
@@ -262,12 +270,12 @@ async def send():
                         
                         power = lg
                         dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
-                        print(dbg+"|  STATE:INGAME","HP:",hp,"Power:",lg)
+                        print(dbg+"|  状态:游戏中","HP:",hp,"Power:",lg)
                         await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(lg))
                         
                 else:
                         dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
-                        print(dbg+"|  STATE:INGAME","HP:",hp,"Power:",power)
+                        print(dbg+"|  状态:游戏中","HP:",hp,"Power:",power)
                         await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(power))
                         
                 
@@ -282,18 +290,18 @@ async def send():
                 await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(power))
                 gamestate2="bag" 
                 dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)   
-                print(dbg+"|  STATE:IN BAG","Power:",power)
+                print(dbg+"|  状态:在背包","Power:",power)
 
             else:
                 if(gamestate =="game" and gamestate2 == "game"):
                      dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
-                     print(dbg+"|  STATE:INGAME","HP:",hp,"Power:",power)
+                     print(dbg+"|  状态:游戏中","HP:",hp,"Power:",power)
                      await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(power))
                      gamestate2="other"
                 else:
                     gamestate2="other"
                     dbg="\n\n"+str(hsv)+"|"+str(np.array(hss))+"|"+str(ps)+"|"+str(power)
-                    print(dbg+"|  STATE:Not In Game","Power: 0")
+                    print(dbg+"|  状态:未进入游戏","Power: 0")
                     await client.set_strength(Channel.A,StrengthOperationType.SET_TO,int(0))
             
         except all as ww:
@@ -339,29 +347,30 @@ async def main():
                     print(f"已经临时修改LOCALIP为: {chosen_ip}")
                 else:
                     print("无效输入，请重新输入对应的数字。")
-            
-    async with DGLabWSServer("0.0.0.0", 5678, 60) as server:
+    # 获取未占用的随机端口，范围5678-8765
+
+    port = get_free_port()
+    async with DGLabWSServer("0.0.0.0", port, 60) as server:
         global client
         global Enable
         client = server.new_local_client()
         
-        url = client.get_qrcode("ws://"+LocalIP+":5678")
-        print("Scan the QRCODE with DG-Lab App")
+        url = client.get_qrcode("ws://"+LocalIP+":"+port)
+        print("请用DG-Lab App,选择Socket控制 扫描屏幕中二维码 以 绑定连接")
         print_qrcode(url)
 
-        
         await client.bind()
         pulse_data_iterator = iter(PULSE_DATA.values())
         
-        print(f"Binded with APP {client.target_id}")
+        print(f"已与APP {client.target_id} 成功绑定")
 
         async for data in client.data_generator():      
             if isinstance(data, FeedbackButton):    
                 if data == FeedbackButton.A1 or data == FeedbackButton.A2 or data == FeedbackButton.A3 or data == FeedbackButton.A4 or data == FeedbackButton.A5:
-                    print("Wave Out Enabled")
+                    print("波形输出已启用")
                     Enable=1
                 if data == FeedbackButton.B1 or data == FeedbackButton.B2 or data == FeedbackButton.B3 or data == FeedbackButton.B4 or data == FeedbackButton.B5:
-                    print("Wave Out Disabled")
+                    print("波形输出已关闭")
                     Enable=0
             try:
                 
@@ -378,16 +387,6 @@ async def main():
             except :
                 print("das")
 
-
-
-       
-        
-
 if __name__ == "__main__":
+    config_init()
     asyncio.run(main())
-    
-    
-    
-
-
-
