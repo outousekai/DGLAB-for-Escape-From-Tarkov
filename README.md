@@ -30,12 +30,8 @@ Ratelimit:识别计算频率限制(S)
 
 HPlow/high:low为强度最大时的血量值,high为开始通电时的血量值
 
-LocalIP:本机在局域网内的ip
-
-LocalIP:本机在局域网内的ip
-
 powerlimit 强度上限(需将手机端的 '最低强度上限' 设置为与该值相同 或设置为200-200)
-
+ `这个是因为郊狼app,如果接收到超过上限的数值,那么会丢弃,而不是按照最大上限进行输出`
 BagColorMin/Max: 背包采样点颜色范围
 
 RoleHsvmax/min: 彩色小人识别HSV范围
