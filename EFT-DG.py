@@ -160,6 +160,12 @@ async def send():
            
             i =pyautogui.screenshot(region=ScreenSet)
             i_ar=np.array(i)
+
+            pointsnum=ScreenSet[2]*ScreenSet[3]
+            msk=[2030,11527,11951,16595,17017,23127,24322]
+            Dlist=[int((msk[0]/35136)*pointsnum),int((msk[1]/35136)*pointsnum),int((msk[2]/35136)*pointsnum),int((msk[3]/35136)*pointsnum),int((msk[4]/35136)*pointsnum),int((msk[5]/35136)*pointsnum),int((msk[6]/35136)*pointsnum)]
+            Li=np.delete(np.array(range(0,35136)),Dlist)
+
             points= np.delete(i_ar.reshape([-1,3]),Li,axis=0)
             Cw=[0.0795,0.1931,0.1363,0.1363,0.1591,0.1477,0.1477]
             
