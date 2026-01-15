@@ -13,7 +13,7 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(13deg, #66ea92 0%, #0095da 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -338,6 +338,14 @@
             padding-bottom: 8px;
             border-bottom: 2px solid #e0e0e0;
         }
+        .config-section-title-h {
+            font-size: 14px;
+            font-weight: 600;
+            color: #7c626f;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
+        }
         
         .config-row {
             display: grid;
@@ -514,8 +522,7 @@
                         <label>识别频率 (Ratelimit)</label>
                         <input type="number" id="configRatelimit" step="0.1" min="0.1" max="5">
                     </div>
-                </div>
-                <div class="config-row">
+                
                     <div class="config-item">
                         <label>HP低阈值 (HPlow)</label>
                         <input type="number" id="configHPlow" step="1" min="0" max="500">
@@ -523,6 +530,10 @@
                     <div class="config-item">
                         <label>HP高阈值 (HPhigh)</label>
                         <input type="number" id="configHPhigh" step="1" min="0" max="500">
+                    </div>
+                    <div class="config-item">
+                        <label>强度缓冲率 (tempRate)</label>
+                        <input type="number" id="configTempRate" step="0.1" min="0" max="1">
                     </div>
                 </div>
             </div>
@@ -538,22 +549,13 @@
             </div>
             
             <div class="config-section">
-                <div class="config-section-title">背包颜色识别</div>
+                <div class="config-section-title-h">背包颜色识别范围</div>
                 <div class="config-row">
                     <div class="config-item">
                         <label>背包颜色最小值 (R)</label>
                         <input type="number" id="configBagColorMinR" step="1" min="0" max="255">
                     </div>
-                    <div class="config-item">
-                        <label>背包颜色最小值 (G)</label>
-                        <input type="number" id="configBagColorMinG" step="1" min="0" max="255">
-                    </div>
-                </div>
-                <div class="config-row">
-                    <div class="config-item">
-                        <label>背包颜色最小值 (B)</label>
-                        <input type="number" id="configBagColorMinB" step="1" min="0" max="255">
-                    </div>
+                    
                     <div class="config-item">
                         <label>背包颜色最大值 (R)</label>
                         <input type="number" id="configBagColorMaxR" step="1" min="0" max="255">
@@ -561,8 +563,21 @@
                 </div>
                 <div class="config-row">
                     <div class="config-item">
+                        <label>背包颜色最小值 (G)</label>
+                        <input type="number" id="configBagColorMinG" step="1" min="0" max="255">
+                    </div>
+                    <div class="config-item">
                         <label>背包颜色最大值 (G)</label>
                         <input type="number" id="configBagColorMaxG" step="1" min="0" max="255">
+                    </div>
+                   
+                    
+                    
+                </div>
+                <div class="config-row">
+                     <div class="config-item">
+                        <label>背包颜色最小值 (B)</label>
+                        <input type="number" id="configBagColorMinB" step="1" min="0" max="255">
                     </div>
                     <div class="config-item">
                         <label>背包颜色最大值 (B)</label>
@@ -572,36 +587,28 @@
             </div>
             
             <div class="config-section">
-                <div class="config-section-title">角色HSV识别 - 最大值</div>
-                <div class="config-row">
-                    <div class="config-item">
-                        <label>H最大值 (RoleHmax)</label>
-                        <input type="number" id="configRoleHmax" step="1" min="0" max="360">
-                    </div>
-                    <div class="config-item">
-                        <label>S最大值 (RoleSmax)</label>
-                        <input type="number" id="configRoleSmax" step="0.1" min="0" max="1">
-                    </div>
-                </div>
-                <div class="config-row">
-                    <div class="config-item">
-                        <label>V最大值 (RoleVMax)</label>
-                        <input type="number" id="configRoleVMax" step="0.1" min="0" max="1">
-                    </div>
-                </div>
-            </div>
-            
-            <div class="config-section">
-                <div class="config-section-title">角色HSV识别 - 最小值</div>
+                <div class="config-section-title-h">角色HSV识别范围</div>
                 <div class="config-row">
                     <div class="config-item">
                         <label>H最小值 (RoleHmin)</label>
                         <input type="number" id="configRoleHmin" step="1" min="0" max="360">
                     </div>
                     <div class="config-item">
-                        <label>S最小值 (RoleSmin)</label>
-                        <input type="number" id="configRoleSmin" step="0.1" min="0" max="1">
+                        <label>H最大值 (RoleHmax)</label>
+                        <input type="number" id="configRoleHmax" step="1" min="0" max="360">
                     </div>
+                    
+                </div>
+                <div class="config-row">
+                    
+                        <div class="config-item">
+                            <label>S最小值 (RoleSmin)</label>
+                            <input type="number" id="configRoleSmin" step="0.1" min="0" max="1">
+                        </div>
+                        <div class="config-item">
+                            <label>S最大值 (RoleSmax)</label>
+                            <input type="number" id="configRoleSmax" step="0.1" min="0" max="1">
+                        </div>
                 </div>
                 <div class="config-row">
                     <div class="config-item">
@@ -609,11 +616,13 @@
                         <input type="number" id="configRoleVMin" step="0.1" min="0" max="1">
                     </div>
                     <div class="config-item">
-                        <label>温度缓冲率 (tempRate)</label>
-                        <input type="number" id="configTempRate" step="0.1" min="0" max="1">
+                        <label>V最大值 (RoleVMax)</label>
+                        <input type="number" id="configRoleVMax" step="0.1" min="0" max="1">
                     </div>
                 </div>
             </div>
+            
+         
             
             <button class="config-save-btn" onclick="saveConfig()">💾 保存配置</button>
             <div class="save-status" id="saveStatus"></div>
